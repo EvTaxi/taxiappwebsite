@@ -18,19 +18,18 @@ const Hero = () => {
           transition={{ duration: 0.5 }}
         >
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Your Ride-Share Business,
+            Reclaim Control of Your Ride-Share Business.
             <br />
-            <span className="text-yellow-400"> Keep 100% Of Fares</span>
+            <span className="text-yellow-400"> Keep 100% of Your Earnings!</span>
           </h1>
           
           <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
-            Stop giving away your profits to ride-sharing companies.
-            Get your own branded booking system with QR codes and keep 100% of your fares.
+            Stop letting ride-sharing platforms take a slice of your hard-earned fares. Get your own personalized booking system with QR codes to take back control, increase your profits, and provide a seamless experience for your customers.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button className="bg-yellow-400 text-blue-900 px-8 py-4 rounded-full text-lg font-semibold hover:bg-yellow-300 transition-colors flex items-center gap-2 justify-center">
-              Start Your Journey
+              Ready to Boost Your Business?
               <ArrowRight className="w-5 h-5" />
             </button>
             <button className="bg-white/10 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/20 transition-colors">
@@ -40,7 +39,7 @@ const Hero = () => {
 
           <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
             {[
-              { number: '100%', label: 'Fare Retention' },
+              { number: '100%', label: 'Keep every dollar you make.' },
               { number: '0%', label: 'Commission Fees' },
               { number: '24/7', label: 'Booking System' },
               { number: 'Free', label: 'QR Code Signs' },
