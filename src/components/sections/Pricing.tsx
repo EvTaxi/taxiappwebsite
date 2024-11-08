@@ -11,8 +11,8 @@ const Pricing = () => {
       monthlyFee: 29.99,
       features: [
         "EV Taxi Branded Booking App",
-        "2 QR Code Signs",
-        "2 EV Taxi Signs",
+        "2 vinyl QR Code Signs",
+        "2 vinyl EV Taxi Signs",
         "2 NFC Cards",
         "Basic Support",
         "Future Booking System",
@@ -27,30 +27,31 @@ const Pricing = () => {
       popular: true,
       features: [
         "Everything in Starter, plus:",
-        "2 QR Code Signs",
-        "2 EV Taxi Signs",
-        "5 NFC Cards",
+        "2 Magnitic QR Code Signs",
+        "2 Magnitic EV Taxi Signs",
+        "4 NFC Cards",
         "Priority Support",
         "Advanced Analytics",
-        "Marketing Materials",
+        "Multi-Vehicle Support",
         "Customer Management",
-        "Payment Processing",
-        "Booking Website"
+        "In App Payment Processing",
+        "Branded Booking App",
       ]
     },
     {
-      name: "Custom",
-      setupFee: 1299,
+      name: "Customized App",
+      setupFee: 1499,
       monthlyFee: 99,
       features: [
         "Everything in Professional, plus:",
-        "2 QR Code Signs",
+        "Custom branded app",
+		"2 Custom Magnitic QR Code Signs",
         "2 Custom Logo Signs",
-        "4 NFC Cards",
+        "8 Custom NFC Cards",
         "24/7 VIP Support",
         "Custom Branded App",
         "Multi-Vehicle Support",
-        "API Access",
+        "Advance Driver App",
         "Business Consulting",
         "Custom Integration Options"
       ]
