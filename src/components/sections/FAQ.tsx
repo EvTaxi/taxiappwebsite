@@ -10,27 +10,31 @@ const FAQ = () => {
   const faqs = [
     {
       question: "How does the QR code booking system work?",
-      answer: "We provide you with custom QR codes to place on your vehicle. When customers scan these codes with their phone camera, they're taken directly to your booking page where they can request a ride immediately or schedule for later - no app download required."
+      answer: "We provide you with custom magnitic or viynl QR code signs to place on your vehicle. When customers scan these codes with their phone camera, they're taken directly to your booking page where they can request a ride immediately or schedule for later - no app download required."
     },
     {
       question: "Do I need to pay any commission fees?",
-      answer: "No! Unlike ride-sharing companies that take 55-75% of your fares, we charge zero commission. You keep 100% of what your customers pay. We only charge a fixed monthly fee for the booking system and support."
+      answer: "No! Unlike ride-sharing companies that take 50-75% of your fares, we charge zero commission. You keep 100% of what your customers pay. We charge a one-time payment to create your app and a fixed monthly payment to cover server costs and to provide you with support."
     },
     {
       question: "What's included in the setup fee?",
-      answer: "Your setup fee covers custom QR code signs, NFC cards, initial system configuration, and personal onboarding support to get you started. We'll help you set up your rates, service area, and booking preferences."
+      answer: "Your setup fee covers custom QR code signs, Taxi Light, NFC cards, initial system configuration, and personal onboarding support to get you started. We'll help you set up your rates, service area, and booking preferences."
     },
     {
       question: "Can customers schedule future rides?",
-      answer: "Yes! Customers can book rides in advance, helping you build a reliable schedule of regular customers. Perfect for airport runs, regular commuters, or any planned trips."
+      answer: "Yes! Customers can book rides in advance with you, helping you build a reliable schedule of regular customers. Perfect for airport runs, regular commuters, or big events."
     },
     {
       question: "How do I receive payments from customers?",
-      answer: "You can accept cash payments or use our integrated payment processing system to accept credit cards and digital payments. All payments go directly to your account."
+      answer: "You can accept cash payments or use servies like cash app or venmo etc. Higher Tier plans we provivde support to set up in app payment processors to accept credit cards and digital payments along with custom tip pages."
     },
     {
       question: "What kind of support do you provide?",
-      answer: "We provide technical support for your booking system, help with customer issues, and guidance on growing your business. Higher tier plans include priority support and business consulting."
+      answer: "We provide technical support for your booking system, help issues ou may encounter, and guidance on growing your business. Higher tier plans include priority support and business consulting."
+    },
+	{
+      question: "Can I still do Uber and Lyft?",
+      answer: "Of Course! This is actually recommended. Build clients through Uber and Lyft and have them book with you at a future date!"
     }
   ];
 
