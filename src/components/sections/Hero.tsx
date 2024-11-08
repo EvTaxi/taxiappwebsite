@@ -18,7 +18,7 @@ const Hero = () => {
           transition={{ duration: 0.5 }}
         >
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Reclaim Control of Your Ride-Share Business.
+            Maximize Your Ride-Share Revenue.
             <br />
             <span className="text-yellow-400"> Keep 100% of Your Earnings!</span>
           </h1>
