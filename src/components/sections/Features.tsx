@@ -51,7 +51,7 @@ const Features = () => {
             Everything You Need to Succeed
           </h2>
           <p className="text-xl text-gray-600">
-            Our complete solution gives you the tools to run your taxi business independently
+            Our complete solution gives you the tools to run your own ride-share business completely independently
           </p>
         </motion.div>
 
