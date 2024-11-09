@@ -26,8 +26,8 @@ const plans: Plan[] = [
     setupFee: 199,
     monthlyFee: 29.99,
     priceIds: {
-      subscription: 'price_1QJG1mCM0vs93jhuqiNRXAMf',
-      setup: 'price_1QJG1mCM0vs93jhu9emshd4q'
+      subscription: 'price_1QJLwbA3rr6byWPzDLMZV8pr',
+      setup: 'price_1QJLx0A3rr6byWPznRs97N0W'
     },
     features: [
       "EV Taxi Branded Booking App",
@@ -45,8 +45,8 @@ const plans: Plan[] = [
     monthlyFee: 49.99,
     popular: true,
     priceIds: {
-      subscription: 'price_1QJG2KCM0vs93jhucNf9nkiQ',
-      setup: 'price_1QJG2YCM0vs93jhuBnbSfrX8'
+      subscription: 'price_1QJLxrA3rr6byWPzSvL4fgbU',
+      setup: 'price_1QJLxrA3rr6byWPztwjDNq3I'
     },
     features: [
       "Everything in Starter, plus:",
@@ -67,8 +67,8 @@ const plans: Plan[] = [
     setupFee: 999.99,
     monthlyFee: 74.99,
     priceIds: {
-      subscription: 'price_1QJG3KCM0vs93jhu0huFoYTF',
-      setup: 'price_1QJG3KCM0vs93jhuqyF6r8VZ'
+      subscription: 'price_1QJLyJA3rr6byWPzNMUfhxcI',
+      setup: 'price_1QJLy2A3rr6byWPztHZoOcBt'
     },
     features: [
       "Make it truly yours. We will make a customized app just for your Business:",
