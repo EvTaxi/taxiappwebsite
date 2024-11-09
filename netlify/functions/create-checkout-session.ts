@@ -1,4 +1,4 @@
-import { Handler } from '@netlify/functions';
+import { Handler, HandlerEvent } from '@netlify/functions';
 import Stripe from 'stripe';
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -9,24 +9,31 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-10-28.acacia'
 });
 
-export const handler: Handler = async (event) => {
-  // Enable CORS
+interface StripeHeaders {
+  [key: string]: string | number | boolean;
+}
+
+export const handler: Handler = async (event: HandlerEvent) => {
+  const headers: StripeHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  // Handle OPTIONS request for CORS
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
-      },
+      headers,
       body: ''
     };
   }
 
-  // Handle POST request
+  // Verify POST method
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
@@ -34,16 +41,16 @@ export const handler: Handler = async (event) => {
   try {
     const { subscriptionPriceId, setupPriceId, planName } = JSON.parse(event.body || '{}');
 
+    // Validate required fields
     if (!subscriptionPriceId || !setupPriceId || !planName) {
       return {
         statusCode: 400,
-        headers: {
-          'Access-Control-Allow-Origin': '*'
-        },
+        headers,
         body: JSON.stringify({ error: 'Missing required fields' })
       };
     }
 
+    // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       billing_address_collection: 'required',
@@ -74,11 +81,10 @@ export const handler: Handler = async (event) => {
       }
     });
 
+    // Return successful response
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers,
       body: JSON.stringify({
         sessionId: session.id,
         url: session.url
@@ -87,11 +93,10 @@ export const handler: Handler = async (event) => {
 
   } catch (error) {
     console.error('Stripe API Error:', error);
+    
     return {
       statusCode: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers,
       body: JSON.stringify({ 
         error: 'Failed to create checkout session',
         details: error instanceof Error ? error.message : 'Unknown error'
