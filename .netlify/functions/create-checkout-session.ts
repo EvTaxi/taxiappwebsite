@@ -52,8 +52,8 @@ export const handler: Handler = async (event: HandlerEvent) => {
       };
     }
 
-    // Create a setup session first for the one-time payment
-    const setupSession = await stripe.checkout.sessions.create({
+    // Create the setup session
+    const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
       billing_address_collection: 'required',
@@ -63,25 +63,31 @@ export const handler: Handler = async (event: HandlerEvent) => {
           quantity: 1,
         }
       ],
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/subscribe?setup_session_id={CHECKOUT_SESSION_ID}`,
+      after_completion: {
+        type: 'redirect',
+        redirect: {
+          url: `${process.env.NEXT_PUBLIC_SITE_URL}/subscribe?setup_complete=true&subscription_price=${subscriptionPriceId}`
+        }
+      },
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/subscribe?setup_complete=true&subscription_price=${subscriptionPriceId}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
       metadata: {
         planName,
         setupPriceId,
-        subscriptionPriceId, // Store this for the next step
+        subscriptionPriceId,
         type: 'setup_payment',
         source: 'website_checkout'
       }
     });
 
-    console.log('Created setup session:', setupSession.id);
+    console.log('Created setup session:', session.id);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        sessionId: setupSession.id,
-        url: setupSession.url
+        sessionId: session.id,
+        url: session.url
       })
     };
 

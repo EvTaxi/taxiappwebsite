@@ -21,32 +21,27 @@ export const handler: Handler = async (event: HandlerEvent) => {
       throw new Error('Request body is missing');
     }
 
-    const { setupSessionId } = JSON.parse(event.body);
+    const { priceId, customerId } = JSON.parse(event.body);
 
-    // Retrieve the setup session to get the subscription price ID
-    const setupSession = await stripe.checkout.sessions.retrieve(setupSessionId);
-    const subscriptionPriceId = setupSession.metadata?.subscriptionPriceId;
-    const customerId = setupSession.customer;
+    console.log('Creating subscription session for:', {
+      priceId,
+      customerId
+    });
 
-    if (!subscriptionPriceId || !customerId) {
-      throw new Error('Missing required metadata from setup session');
-    }
-
-    // Create the subscription session
-    const subscriptionSession = await stripe.checkout.sessions.create({
+    // Create subscription session
+    const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
-      customer: customerId as string,
+      customer: customerId,
       line_items: [
         {
-          price: subscriptionPriceId,
+          price: priceId,
           quantity: 1,
         }
       ],
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
       metadata: {
-        setupSessionId,
         type: 'subscription',
         source: 'website_checkout'
       }
@@ -56,13 +51,17 @@ export const handler: Handler = async (event: HandlerEvent) => {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        sessionId: subscriptionSession.id,
-        url: subscriptionSession.url
+        sessionId: session.id,
+        url: session.url
       })
     };
 
   } catch (error) {
-    console.error('Function error:', error);
+    console.error('Function error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      error
+    });
+
     return {
       statusCode: 500,
       headers,
