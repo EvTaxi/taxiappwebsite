@@ -15,11 +15,13 @@
     "lucide-react": "^0.454.0",
     "next": "14.1.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "sonner": "^1.7.0",
+    "stripe": "^17.3.1"
   },
   "devDependencies": {
     "@netlify/plugin-nextjs": "^5.8.1",
-    "@types/node": "^20",
+    "@types/node": "^20.17.6",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
