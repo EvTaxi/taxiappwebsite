@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getStripe } from '@/lib/stripe';
 import { Loader2 } from 'lucide-react';
 
-export default function SubscribePage() {
+function SubscribeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function SubscribePage() {
     
     if (!setupSessionId) {
       setError('No setup session ID found');
-      setLoading(false);
+      setIsLoading(false);
       return;
     }
 
@@ -47,7 +47,8 @@ export default function SubscribePage() {
       } catch (err) {
         console.error('Subscription error:', err);
         setError(err instanceof Error ? err.message : 'Failed to set up subscription');
-        setLoading(false);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -71,12 +72,33 @@ export default function SubscribePage() {
     );
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-        <p className="text-gray-600">Setting up your subscription...</p>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Setting up your subscription...</p>
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  return null;
+}
+
+export default function SubscribePage() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <SubscribeContent />
+    </Suspense>
   );
 }
