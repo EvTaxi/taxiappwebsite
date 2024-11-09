@@ -11,7 +11,7 @@ if (!process.env.NEXT_PUBLIC_SITE_URL) {
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
+  apiVersion: '2024-10-28.acacia', // Updated API version
   typescript: true,
 });
 
@@ -85,14 +85,6 @@ export async function POST(request: Request) {
           message: 'We will process your subscription and setup immediately after payment.',
         },
       },
-    });
-
-    // Log successful session creation (you can remove this in production)
-    console.log('Checkout session created:', {
-      sessionId: session.id,
-      planName,
-      subscriptionPriceId,
-      setupPriceId,
     });
 
     // Return the session ID
