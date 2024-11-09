@@ -93,10 +93,10 @@ const Pricing = () => {
     try {
       setLoading(plan.id);
       
-      // Log the checkout attempt
       console.log('Starting checkout for plan:', {
         name: plan.name,
-        priceIds: plan.priceIds
+        priceIds: plan.priceIds,
+        timestamp: new Date().toISOString()
       });
 
       const response = await fetch('/.netlify/functions/create-checkout-session', {
@@ -111,43 +111,63 @@ const Pricing = () => {
         }),
       });
 
+      console.log('Response status:', response.status);
+      
       const data = await response.json();
-      console.log('Checkout session response:', data);
+      console.log('Response data:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || data.details || 'Failed to create checkout session');
+        throw new Error(
+          data.error 
+            ? `${data.error}${data.details ? `: ${data.details}` : ''}`
+            : 'Failed to create checkout session'
+        );
+      }
+
+      if (!data.sessionId) {
+        console.error('Missing sessionId in response:', data);
+        throw new Error('Invalid checkout session response');
       }
 
       const stripe = await getStripe();
       if (!stripe) {
-        throw new Error('Stripe failed to initialize');
+        throw new Error('Failed to initialize Stripe');
       }
 
-      console.log('Redirecting to Stripe checkout...');
+      console.log('Redirecting to checkout with session:', data.sessionId);
+
       const { error } = await stripe.redirectToCheckout({ 
         sessionId: data.sessionId 
       });
       
       if (error) {
         console.error('Stripe redirect error:', error);
-        throw error;
+        throw new Error(error.message);
       }
     } catch (error) {
-      console.error('Payment Error:', {
+      console.error('Checkout error:', {
         message: error instanceof Error ? error.message : 'Unknown error',
-        error
+        error,
+        planId: plan.id,
+        planName: plan.name
       });
       
+      // Show error notification
       toast.error(
         error instanceof Error 
           ? error.message 
-          : 'Payment failed. Please try again or contact support.'
+          : 'Payment failed. Please try again or contact support.',
+        {
+          duration: 5000,
+          position: 'top-right',
+        }
       );
     } finally {
       setLoading(null);
     }
   };
 
+  // Rest of your component remains the same...
   return (
     <section className="py-20 bg-gray-50" id="pricing">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
