@@ -1,7 +1,6 @@
 import { Handler, HandlerEvent } from '@netlify/functions';
 import Stripe from 'stripe';
 
-// Check for required environment variables early
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not defined');
 }
@@ -66,9 +65,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
         subscription: subscriptionPrice.id,
         setup: setupPrice.id
       });
-    } catch (error) {
-      console.error('Price verification failed:', error);
-      throw new Error(`Invalid price IDs: ${error.message}`);
+    } catch (priceError) {
+      console.error('Price verification failed:', priceError);
+      throw new Error('Invalid price IDs. Please check your configuration.');
     }
 
     // Create metadata
@@ -121,12 +120,11 @@ export const handler: Handler = async (event: HandlerEvent) => {
     };
 
   } catch (error) {
-    // Detailed error logging
+    // Improved error handling with type checking
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     console.error('Function error:', {
-      message: error.message,
-      stack: error.stack,
-      type: error.type,
-      details: error
+      message: errorMessage,
+      error
     });
     
     return {
@@ -134,8 +132,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
       headers,
       body: JSON.stringify({ 
         error: 'Failed to create checkout session',
-        details: error.message,
-        type: error.constructor.name
+        details: errorMessage
       })
     };
   }
