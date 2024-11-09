@@ -90,49 +90,46 @@ const Pricing = () => {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (plan: Plan) => {
-    try {
-      setLoading(plan.id);
+  try {
+    setLoading(plan.id);
 
-      // Updated API path to include .netlify/functions
-      const response = await fetch('/.netlify/functions/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          subscriptionPriceId: plan.priceIds.subscription,
-          setupPriceId: plan.priceIds.setup,
-          planName: plan.name,
-        }),
-      });
+    const response = await fetch('/.netlify/functions/create-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        subscriptionPriceId: plan.priceIds.subscription,
+        setupPriceId: plan.priceIds.setup,
+        planName: plan.name,
+      }),
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create checkout session');
-      }
+    const data = await response.json();
 
-      const data = await response.json();
-
-      // Redirect to Stripe Checkout
-      const stripe = await getStripe();
-      if (!stripe) {
-        throw new Error('Stripe failed to initialize');
-      }
-
-      const { error } = await stripe.redirectToCheckout({ 
-        sessionId: data.sessionId 
-      });
-      
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      console.error('Payment Error:', error);
-      toast.error('Payment failed. Please try again.');
-    } finally {
-      setLoading(null);
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to create checkout session');
     }
-  };
+
+    const stripe = await getStripe();
+    if (!stripe) {
+      throw new Error('Stripe failed to initialize');
+    }
+
+    const { error } = await stripe.redirectToCheckout({ 
+      sessionId: data.sessionId 
+    });
+    
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error('Payment Error:', error);
+    toast.error(error instanceof Error ? error.message : 'Payment failed. Please try again.');
+  } finally {
+    setLoading(null);
+  }
+};
 
   return (
     <section className="py-20 bg-gray-50" id="pricing">
