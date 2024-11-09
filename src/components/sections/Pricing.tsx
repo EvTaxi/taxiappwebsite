@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { getStripe } from '@/lib/stripe';
+import { toast } from 'sonner';
 
 interface Plan {
   id: string;
@@ -104,11 +105,11 @@ const Pricing = () => {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+      const data = await response.json();
 
-      const { sessionId } = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
 
       // Redirect to Stripe Checkout
       const stripe = await getStripe();
@@ -116,14 +117,14 @@ const Pricing = () => {
         throw new Error('Stripe failed to initialize');
       }
 
-      const { error } = await stripe.redirectToCheckout({ sessionId });
+      const { error } = await stripe.redirectToCheckout({ sessionId: data.sessionId });
       
       if (error) {
         throw error;
       }
     } catch (error) {
       console.error('Payment Error:', error);
-      alert('Payment failed. Please try again.');
+      toast.error('Payment failed. Please try again.');
     } finally {
       setLoading(null);
     }

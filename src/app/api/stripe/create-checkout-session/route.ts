@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-// Initialize Stripe with complete error handling
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not defined');
 }
@@ -11,13 +10,18 @@ if (!process.env.NEXT_PUBLIC_SITE_URL) {
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-10-28.acacia', // Updated API version
+  apiVersion: '2024-10-28.acacia',
   typescript: true,
 });
 
+interface RequestBody {
+  subscriptionPriceId: string;
+  setupPriceId: string;
+  planName: string;
+}
+
 export async function POST(request: Request) {
   try {
-    // Validate the request
     if (!request.body) {
       return NextResponse.json(
         { error: 'Request body is required' },
@@ -25,11 +29,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Parse the request body
-    const body = await request.json();
+    const body: RequestBody = await request.json();
     const { subscriptionPriceId, setupPriceId, planName } = body;
 
-    // Validate required fields
     if (!subscriptionPriceId || !setupPriceId || !planName) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -37,21 +39,32 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create customer metadata
     const metadata = {
       planName,
       subscriptionPriceId,
       setupPriceId,
       timestamp: new Date().toISOString(),
+      source: 'website_checkout',
     };
 
-    // Create the checkout session
+    try {
+      await Promise.all([
+        stripe.prices.retrieve(subscriptionPriceId),
+        stripe.prices.retrieve(setupPriceId)
+      ]);
+    } catch (error) {
+      console.error('Invalid price ID:', error);
+      return NextResponse.json(
+        { error: 'Invalid price ID provided' },
+        { status: 400 }
+      );
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       billing_address_collection: 'required',
       customer_creation: 'always',
       line_items: [
-        // Monthly subscription
         {
           price: subscriptionPriceId,
           quantity: 1,
@@ -59,7 +72,6 @@ export async function POST(request: Request) {
             enabled: false,
           },
         },
-        // One-time setup fee
         {
           price: setupPriceId,
           quantity: 1,
@@ -75,29 +87,37 @@ export async function POST(request: Request) {
       metadata,
       subscription_data: {
         metadata,
+        trial_settings: {
+          end_behavior: {
+            missing_payment_method: 'cancel',
+          },
+        },
       },
       payment_intent_data: {
         metadata,
+        description: `${planName} Plan - Initial payment and setup fee`,
       },
-      // Customize the appearance
       custom_text: {
         submit: {
           message: 'We will process your subscription and setup immediately after payment.',
         },
+        shipping_address: {
+          message: 'Please provide your billing address for tax purposes.',
+        },
       },
+      locale: 'auto',
+      expires_at: Math.floor(Date.now() / 1000) + (30 * 60),
     });
 
-    // Return the session ID
     return NextResponse.json({ 
       sessionId: session.id,
-      success: true 
+      success: true,
+      url: session.url
     });
 
   } catch (error) {
-    // Log the error (make sure to not log sensitive info in production)
     console.error('Stripe API Error:', error);
 
-    // Determine if it's a Stripe error
     if (error instanceof Stripe.errors.StripeError) {
       return NextResponse.json(
         { 
@@ -109,7 +129,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // For other types of errors
     return NextResponse.json(
       { 
         error: 'An unexpected error occurred',
@@ -118,18 +137,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
-
-// Handle OPTIONS request for CORS
-export async function OPTIONS(request: Request) {
-  return NextResponse.json(
-    {},
-    {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    }
-  );
 }
