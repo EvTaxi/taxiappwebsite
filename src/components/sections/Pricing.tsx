@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
-import getStripe from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 
 interface Plan {
   id: string;
@@ -13,8 +13,8 @@ interface Plan {
   popular?: boolean;
   features: string[];
   priceIds: {
-    subscription: string; // Monthly subscription price ID
-    setup: string;       // One-time setup fee price ID
+    subscription: string;
+    setup: string;
   };
 }
 
