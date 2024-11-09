@@ -93,7 +93,8 @@ const Pricing = () => {
     try {
       setLoading(plan.id);
 
-      const response = await fetch('/api/stripe/create-checkout-session', {
+      // Updated API path to include .netlify/functions
+      const response = await fetch('/.netlify/functions/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,11 +106,12 @@ const Pricing = () => {
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create checkout session');
       }
+
+      const data = await response.json();
 
       // Redirect to Stripe Checkout
       const stripe = await getStripe();
@@ -117,7 +119,9 @@ const Pricing = () => {
         throw new Error('Stripe failed to initialize');
       }
 
-      const { error } = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      const { error } = await stripe.redirectToCheckout({ 
+        sessionId: data.sessionId 
+      });
       
       if (error) {
         throw error;

@@ -18,7 +18,6 @@ function SuccessContent() {
   const sessionId = searchParams.get('session_id');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [verificationComplete, setVerificationComplete] = useState(false);
 
   useEffect(() => {
     if (!sessionId) {
@@ -29,7 +28,7 @@ function SuccessContent() {
 
     const verifySession = async () => {
       try {
-        const response = await fetch('/api/stripe/verify-session', {
+        const response = await fetch('/.netlify/functions/verify-session', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -41,13 +40,6 @@ function SuccessContent() {
           throw new Error('Payment verification failed');
         }
 
-        const data = await response.json();
-        
-        if (data.status !== 'complete' && data.status !== 'succeeded') {
-          throw new Error('Payment incomplete');
-        }
-
-        setVerificationComplete(true);
         setLoading(false);
       } catch (err) {
         setError('Failed to verify payment');
