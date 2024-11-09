@@ -20,11 +20,11 @@ const Hero = () => {
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
             Maximize Your Ride-Share Revenue.
             <br />
-            <span className="text-yellow-400"> Keep 100% of Your Earnings!</span>
+            <span className="text-yellow-400"> Keep 100% of Your Fares!</span>
           </h1>
           
           <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
-            Stop letting ride-sharing platforms take a slice of your hard-earned fares. Get your own personalized booking system with QR codes to take back control, increase your profits, and provide a seamless experience for your customers.
+            Stop letting ride-sharing platforms take a slice of your hard-earned money. Get your own personalized booking system with QR codes to take back control, increase your profits, and provide a seamless experience for your customers.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -39,7 +39,7 @@ const Hero = () => {
 
           <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
             {[
-              { number: '100%', label: 'Keep every dollar you make.' },
+              { number: '100%', label: 'Keep every dollar.' },
               { number: '0%', label: 'Commission Fees' },
               { number: '24/7', label: 'Booking System' },
               { number: 'Free', label: 'QR Code Signs' },

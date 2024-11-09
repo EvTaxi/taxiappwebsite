@@ -34,7 +34,7 @@ const FAQ = () => {
     },
 	{
       question: "Can I still do Uber and Lyft?",
-      answer: "Of Course! This is actually recommended. Build clients through Uber and Lyft and have them book with you at a future date!"
+      answer: "Absolutely! In fact, it's encouraged. The EV Taxi Booking App is designed to help you convert your existing Uber and Lyft passengers into recurring clients. By providing an exceptional ride experience, you can invite satisfied customers to book directly with you for future trips. This way, you can establish a loyal client base, maximize your earnings, and reduce your dependence on third-party platforms."
     }
   ];
 

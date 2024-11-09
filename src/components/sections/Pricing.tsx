@@ -7,7 +7,7 @@ const Pricing = () => {
   const plans = [
     {
       name: "Starter",
-      setupFee: 499,
+      setupFee: 199,
       monthlyFee: 29.99,
       features: [
         "EV Taxi Branded Booking App",
@@ -20,7 +20,7 @@ const Pricing = () => {
     },
     {
       name: "Professional",
-      setupFee: 799,
+      setupFee: 499.99,
       monthlyFee: 49.99,
       popular: true,
       features: [
@@ -38,8 +38,8 @@ const Pricing = () => {
     },
     {
       name: "Custom App",
-      setupFee: 1499,
-      monthlyFee: 99,
+      setupFee: 999.99,
+      monthlyFee: 74.99,
       features: [
         "Make it truly yours. We will make a customized app just for your Business. :",
         "Your Own Custom Web URL",
