@@ -20,12 +20,6 @@ export const handler: Handler = async (event: HandlerEvent) => {
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
 
-  // Debug log
-  console.log('Function started with environment:', {
-    hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL
-  });
-
   try {
     if (event.httpMethod === 'OPTIONS') {
       return {
@@ -39,17 +33,14 @@ export const handler: Handler = async (event: HandlerEvent) => {
       throw new Error('Request body is missing');
     }
 
-    // Parse request body
     const { subscriptionPriceId, setupPriceId, planName } = JSON.parse(event.body);
     
-    // Debug log
-    console.log('Received request:', {
+    console.log('Creating checkout session for:', {
+      planName,
       subscriptionPriceId,
-      setupPriceId,
-      planName
+      setupPriceId
     });
 
-    // Validate inputs
     if (!subscriptionPriceId || !setupPriceId || !planName) {
       return {
         statusCode: 400,
@@ -61,46 +52,40 @@ export const handler: Handler = async (event: HandlerEvent) => {
       };
     }
 
-    // Create session
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
+    // Create a setup session first for the one-time payment
+    const setupSession = await stripe.checkout.sessions.create({
+      mode: 'payment',
       payment_method_types: ['card'],
       billing_address_collection: 'required',
       line_items: [
         {
-          price: subscriptionPriceId,
-          quantity: 1,
-        },
-        {
           price: setupPriceId,
           quantity: 1,
-        },
+        }
       ],
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/subscribe?setup_session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
       metadata: {
         planName,
+        setupPriceId,
+        subscriptionPriceId, // Store this for the next step
+        type: 'setup_payment',
         source: 'website_checkout'
       }
     });
 
-    // Debug log
-    console.log('Session created:', {
-      sessionId: session.id,
-      url: session.url
-    });
+    console.log('Created setup session:', setupSession.id);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        sessionId: session.id,
-        url: session.url
+        sessionId: setupSession.id,
+        url: setupSession.url
       })
     };
 
   } catch (error) {
-    // Detailed error logging
     console.error('Function error:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : 'Unknown error',
