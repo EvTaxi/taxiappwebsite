@@ -1,56 +1,93 @@
 import { Handler, HandlerEvent } from '@netlify/functions';
 import Stripe from 'stripe';
 
+// Check for required environment variables early
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not defined');
+}
+
+if (!process.env.NEXT_PUBLIC_SITE_URL) {
+  throw new Error('NEXT_PUBLIC_SITE_URL is not defined');
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-10-28.acacia'
 });
 
-interface StripeHeaders {
-  [key: string]: string | number | boolean;
-}
-
 export const handler: Handler = async (event: HandlerEvent) => {
-  const headers: StripeHeaders = {
+  const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
 
-  // Handle OPTIONS request for CORS
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: ''
-    };
-  }
-
-  // Verify POST method
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
-  }
-
   try {
-    const { subscriptionPriceId, setupPriceId, planName } = JSON.parse(event.body || '{}');
+    // Log the incoming request
+    console.log('Received request:', {
+      method: event.httpMethod,
+      body: event.body
+    });
 
-    // Validate required fields
-    if (!subscriptionPriceId || !setupPriceId || !planName) {
+    if (event.httpMethod === 'OPTIONS') {
       return {
-        statusCode: 400,
+        statusCode: 200,
         headers,
-        body: JSON.stringify({ error: 'Missing required fields' })
+        body: ''
       };
     }
 
-    // Create Stripe checkout session
+    if (event.httpMethod !== 'POST') {
+      throw new Error(`Invalid method: ${event.httpMethod}`);
+    }
+
+    if (!event.body) {
+      throw new Error('Request body is missing');
+    }
+
+    // Parse and log the request body
+    const { subscriptionPriceId, setupPriceId, planName } = JSON.parse(event.body);
+    console.log('Parsed request data:', { subscriptionPriceId, setupPriceId, planName });
+
+    // Validate required fields
+    if (!subscriptionPriceId || !setupPriceId || !planName) {
+      throw new Error(`Missing required fields: ${JSON.stringify({ subscriptionPriceId, setupPriceId, planName })}`);
+    }
+
+    // Log the prices we're about to verify
+    console.log('Verifying price IDs:', { subscriptionPriceId, setupPriceId });
+
+    // Verify price IDs exist
+    try {
+      const [subscriptionPrice, setupPrice] = await Promise.all([
+        stripe.prices.retrieve(subscriptionPriceId),
+        stripe.prices.retrieve(setupPriceId)
+      ]);
+      console.log('Verified prices:', {
+        subscription: subscriptionPrice.id,
+        setup: setupPrice.id
+      });
+    } catch (error) {
+      console.error('Price verification failed:', error);
+      throw new Error(`Invalid price IDs: ${error.message}`);
+    }
+
+    // Create metadata
+    const metadata = {
+      planName,
+      subscriptionPriceId,
+      setupPriceId,
+      timestamp: new Date().toISOString(),
+      source: 'website_checkout',
+    };
+
+    // Log checkout session creation attempt
+    console.log('Creating checkout session with:', {
+      prices: [subscriptionPriceId, setupPriceId],
+      successUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/success`,
+      cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`
+    });
+
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       billing_address_collection: 'required',
@@ -59,29 +96,21 @@ export const handler: Handler = async (event: HandlerEvent) => {
         {
           price: subscriptionPriceId,
           quantity: 1,
-          adjustable_quantity: {
-            enabled: false,
-          },
         },
         {
           price: setupPriceId,
           quantity: 1,
-          adjustable_quantity: {
-            enabled: false,
-          },
         },
       ],
       mode: 'subscription',
-      allow_promotion_codes: true,
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
-      metadata: {
-        planName,
-        source: 'website_checkout'
-      }
+      metadata,
     });
 
-    // Return successful response
+    // Log successful session creation
+    console.log('Successfully created session:', session.id);
+
     return {
       statusCode: 200,
       headers,
@@ -92,14 +121,21 @@ export const handler: Handler = async (event: HandlerEvent) => {
     };
 
   } catch (error) {
-    console.error('Stripe API Error:', error);
+    // Detailed error logging
+    console.error('Function error:', {
+      message: error.message,
+      stack: error.stack,
+      type: error.type,
+      details: error
+    });
     
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
         error: 'Failed to create checkout session',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error.message,
+        type: error.constructor.name
       })
     };
   }

@@ -90,46 +90,63 @@ const Pricing = () => {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (plan: Plan) => {
-  try {
-    setLoading(plan.id);
+    try {
+      setLoading(plan.id);
+      
+      // Log the checkout attempt
+      console.log('Starting checkout for plan:', {
+        name: plan.name,
+        priceIds: plan.priceIds
+      });
 
-    const response = await fetch('/.netlify/functions/create-checkout-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        subscriptionPriceId: plan.priceIds.subscription,
-        setupPriceId: plan.priceIds.setup,
-        planName: plan.name,
-      }),
-    });
+      const response = await fetch('/.netlify/functions/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subscriptionPriceId: plan.priceIds.subscription,
+          setupPriceId: plan.priceIds.setup,
+          planName: plan.name,
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
+      console.log('Checkout session response:', data);
 
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to create checkout session');
+      if (!response.ok) {
+        throw new Error(data.error || data.details || 'Failed to create checkout session');
+      }
+
+      const stripe = await getStripe();
+      if (!stripe) {
+        throw new Error('Stripe failed to initialize');
+      }
+
+      console.log('Redirecting to Stripe checkout...');
+      const { error } = await stripe.redirectToCheckout({ 
+        sessionId: data.sessionId 
+      });
+      
+      if (error) {
+        console.error('Stripe redirect error:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Payment Error:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        error
+      });
+      
+      toast.error(
+        error instanceof Error 
+          ? error.message 
+          : 'Payment failed. Please try again or contact support.'
+      );
+    } finally {
+      setLoading(null);
     }
-
-    const stripe = await getStripe();
-    if (!stripe) {
-      throw new Error('Stripe failed to initialize');
-    }
-
-    const { error } = await stripe.redirectToCheckout({ 
-      sessionId: data.sessionId 
-    });
-    
-    if (error) {
-      throw error;
-    }
-  } catch (error) {
-    console.error('Payment Error:', error);
-    toast.error(error instanceof Error ? error.message : 'Payment failed. Please try again.');
-  } finally {
-    setLoading(null);
-  }
-};
+  };
 
   return (
     <section className="py-20 bg-gray-50" id="pricing">
