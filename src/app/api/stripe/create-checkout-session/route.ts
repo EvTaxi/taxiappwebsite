@@ -1,13 +1,8 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-// Check for required environment variables
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not defined');
-}
-
-if (!process.env.NEXT_PUBLIC_SITE_URL) {
-  throw new Error('NEXT_PUBLIC_SITE_URL is not defined');
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -17,12 +12,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 // Define the structure of the request body
 interface RequestBody {
-  subscriptionPriceId: string;
-  setupPriceId: string;
+  priceId: string;
   planName: string;
 }
 
-// Stripe checkout session handler
 export async function POST(request: Request) {
   try {
     // Validate the request body
@@ -34,88 +27,86 @@ export async function POST(request: Request) {
     }
 
     const body: RequestBody = await request.json();
-    const { subscriptionPriceId, setupPriceId, planName } = body;
+    const { priceId, planName } = body;
 
     // Validate required fields
-    if (!subscriptionPriceId || !setupPriceId || !planName) {
-      console.error('Missing fields:', { subscriptionPriceId, setupPriceId, planName });
+    if (!priceId || !planName) {
       return NextResponse.json(
-        { error: 'Missing required fields', details: { subscriptionPriceId, setupPriceId, planName } },
+        { 
+          error: 'Missing required fields', 
+          details: { priceId, planName } 
+        },
         { status: 400 }
       );
     }
 
-    // Validate the provided Stripe price IDs
+    // Validate the provided Stripe price ID
     try {
-      await Promise.all([
-        stripe.prices.retrieve(subscriptionPriceId),
-        stripe.prices.retrieve(setupPriceId)
-      ]);
+      await stripe.prices.retrieve(priceId);
     } catch (error) {
       console.error('Invalid price ID:', error);
       return NextResponse.json(
-        { error: 'Invalid price ID provided', details: error.message },
+        { 
+          error: 'Invalid price ID provided',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        },
         { status: 400 }
       );
     }
 
-    // Metadata to be attached to the session
+    // Create metadata for tracking
     const metadata = {
       planName,
-      subscriptionPriceId,
-      setupPriceId,
       timestamp: new Date().toISOString(),
-      source: 'website_checkout',
+      source: 'website_checkout'
     };
 
     // Create the checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
+      mode: 'subscription',
       billing_address_collection: 'required',
       line_items: [
         {
-          price: subscriptionPriceId,
+          price: priceId,
           quantity: 1,
-        },
-        {
-          price: setupPriceId,
-          quantity: 1,
-        },
+        }
       ],
-      mode: 'subscription',
-      allow_promotion_codes: true,
+      metadata,
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
-      metadata,
+      allow_promotion_codes: true,
       subscription_data: {
-        metadata,
-        trial_settings: {
-          end_behavior: {
-            missing_payment_method: 'cancel',
-          },
-        },
-      },
-      payment_intent_data: {
-        metadata,
-        description: `${planName} Plan - Initial payment and setup fee`,
+        metadata
       },
       custom_text: {
         submit: {
-          message: 'We will process your subscription and setup immediately after payment.',
-        },
+          message: 'We will process your subscription immediately after payment.'
+        }
       },
-      locale: 'auto',
-      expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // Session expires in 30 minutes
+      customer_creation: 'always',
+      expires_at: Math.floor(Date.now() / 1000) + (30 * 60) // 30 minutes
     });
 
-    console.log('Checkout session created:', session.id);
-
-    return NextResponse.json({ sessionId: session.id, url: session.url });
+    return NextResponse.json({ 
+      sessionId: session.id,
+      url: session.url 
+    });
 
   } catch (error) {
     console.error('Stripe API Error:', error);
+    
+    if (error instanceof Stripe.errors.StripeError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'An unexpected error occurred' },
+      { 
+        error: error instanceof Error ? error.message : 'An unexpected error occurred'
+      },
       { status: 500 }
     );
   }

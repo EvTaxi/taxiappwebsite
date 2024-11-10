@@ -6,7 +6,7 @@ import { Check } from 'lucide-react';
 import { getStripe } from '@/lib/stripe';
 import { toast } from 'sonner';
 
-// Define types
+// Define Plan interface
 interface Plan {
   id: string;
   name: string;
@@ -86,7 +86,7 @@ export default function Pricing() {
       });
 
       // Make request to create checkout session
-      const response = await fetch('/.netlify/functions/create-checkout-session', {
+      const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
