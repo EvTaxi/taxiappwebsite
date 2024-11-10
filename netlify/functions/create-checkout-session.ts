@@ -109,14 +109,25 @@ export const handler: Handler = async (event) => {
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
       allow_promotion_codes: true,
       subscription_data: {
-        metadata
+        metadata,
+        trial_settings: {
+          end_behavior: {
+            missing_payment_method: 'cancel'
+          }
+        }
       },
+      phone_number_collection: {
+        enabled: true,
+      },
+      tax_id_collection: {
+        enabled: true,
+      },
+      billing_address_collection: 'required',
       custom_text: {
         submit: {
           message: 'We will process your subscription immediately after payment.'
         }
       },
-      customer_creation: 'always',
       locale: 'auto',
       expires_at: Math.floor(Date.now() / 1000) + (30 * 60) // Session expires in 30 minutes
     });
