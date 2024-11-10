@@ -81,15 +81,9 @@ export default function Pricing() {
       
       // Log the plan data we're about to send
       console.log('Starting checkout for plan:', {
-        name: plan.name,
-        priceId: plan.priceId
-      });
-
-      // Prepare request body
-      const requestBody = {
         priceId: plan.priceId,
         planName: plan.name
-      };
+      });
 
       // Make request to create checkout session
       const response = await fetch('/.netlify/functions/create-checkout-session', {
@@ -97,7 +91,10 @@ export default function Pricing() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          priceId: plan.priceId,
+          planName: plan.name
+        }),
       });
 
       const data = await response.json();
@@ -120,13 +117,11 @@ export default function Pricing() {
       }
 
       // Redirect to Stripe checkout
-      console.log('Redirecting to Stripe checkout...');
       const { error } = await stripe.redirectToCheckout({ 
         sessionId: data.sessionId 
       });
       
       if (error) {
-        console.error('Stripe redirect error:', error);
         throw error;
       }
 

@@ -1,7 +1,6 @@
 import { Handler } from '@netlify/functions';
 import Stripe from 'stripe';
 
-// Ensure required environment variables are present
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing STRIPE_SECRET_KEY environment variable');
 }
@@ -10,7 +9,6 @@ if (!process.env.NEXT_PUBLIC_SITE_URL) {
   throw new Error('Missing NEXT_PUBLIC_SITE_URL environment variable');
 }
 
-// Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-10-28.acacia',
   typescript: true,
@@ -68,11 +66,15 @@ export const handler: Handler = async (event) => {
     const { priceId, planName } = parsedBody;
 
     // Validate required fields
-    if (!priceId) {
-      throw new Error('Price ID is required');
-    }
-    if (!planName) {
-      throw new Error('Plan name is required');
+    if (!priceId || !planName) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: 'Missing required fields',
+          details: { priceId, planName }
+        })
+      };
     }
 
     // Verify the price exists in Stripe
@@ -109,7 +111,15 @@ export const handler: Handler = async (event) => {
       allow_promotion_codes: true,
       subscription_data: {
         metadata
-      }
+      },
+      custom_text: {
+        submit: {
+          message: 'We will process your subscription immediately after payment.'
+        }
+      },
+      customer_creation: 'always',
+      locale: 'auto',
+      expires_at: Math.floor(Date.now() / 1000) + (30 * 60) // Session expires in 30 minutes
     });
 
     console.log('Created checkout session:', session.id);
@@ -141,7 +151,7 @@ export const handler: Handler = async (event) => {
 
     // Handle other errors
     return {
-      statusCode: 400,
+      statusCode: 500,
       headers,
       body: JSON.stringify({
         error: error instanceof Error ? error.message : 'An unexpected error occurred',
