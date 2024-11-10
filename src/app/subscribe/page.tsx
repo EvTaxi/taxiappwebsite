@@ -1,22 +1,21 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getStripe } from '@/lib/stripe';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
-function SubscribeContent() {
+export default function SubscribePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const setupSessionId = searchParams.get('setup_session_id');
     
     if (!setupSessionId) {
-      setError('No setup session ID found');
-      setIsLoading(false);
+      router.push('/#pricing');
       return;
     }
 
@@ -41,12 +40,25 @@ function SubscribeContent() {
           throw new Error('Failed to load Stripe');
         }
 
-        await stripe.redirectToCheckout({ 
+        const { error } = await stripe.redirectToCheckout({ 
           sessionId: data.sessionId 
         });
-      } catch (err) {
-        console.error('Subscription error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to set up subscription');
+        
+        if (error) {
+          throw error;
+        }
+
+      } catch (error) {
+        console.error('Subscription error:', error);
+        toast.error(
+          error instanceof Error 
+            ? error.message 
+            : 'Failed to set up subscription. Please try again.',
+          {
+            duration: 5000,
+          }
+        );
+        router.push('/#pricing');
       } finally {
         setIsLoading(false);
       }
@@ -55,50 +67,17 @@ function SubscribeContent() {
     createSubscription();
   }, [searchParams, router]);
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => router.push('/#pricing')}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Setting up your subscription...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-}
-
-export default function SubscribePage() {
   return (
-    <Suspense 
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-            <p className="text-gray-600">Loading...</p>
-          </div>
-        </div>
-      }
-    >
-      <SubscribeContent />
-    </Suspense>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          Setting Up Your Subscription
+        </h2>
+        <p className="text-gray-600">
+          Please wait while we process your setup payment...
+        </p>
+      </div>
+    </div>
   );
 }

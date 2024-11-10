@@ -1,8 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
-import { useState } from 'react';
 import { getStripe } from '@/lib/stripe';
 import { toast } from 'sonner';
 
@@ -38,55 +38,10 @@ const plans: Plan[] = [
       "Schedule & Request Now App",
     ]
   },
-  {
-    id: 'professional',
-    name: "Professional",
-    setupFee: 499.99,
-    monthlyFee: 49.99,
-    popular: true,
-    priceIds: {
-      subscription: 'price_1QJLxrA3rr6byWPzSvL4fgbU',
-      setup: 'price_1QJLxrA3rr6byWPztwjDNq3I'
-    },
-    features: [
-      "Everything in Starter, plus:",
-      "2 Magnetic QR Code Signs",
-      "2 Magnetic EV Taxi Signs",
-      "4 NFC Cards",
-      "Priority Support",
-      "Advanced Analytics",
-      "Multi-Vehicle Support",
-      "Customer Management",
-      "In App Payment Processing",
-      "Branded Booking App",
-    ]
-  },
-  {
-    id: 'custom',
-    name: "Custom App",
-    setupFee: 999.99,
-    monthlyFee: 74.99,
-    priceIds: {
-      subscription: 'price_1QJLyJA3rr6byWPzNMUfhxcI',
-      setup: 'price_1QJLy2A3rr6byWPztHZoOcBt'
-    },
-    features: [
-      "Make it truly yours. We will make a customized app just for your Business:",
-      "Your Own Custom Web URL",
-      "2 Custom Magnetic QR Code Signs",
-      "2 Custom Logo Signs",
-      "8 Custom NFC Cards",
-      "24/7 VIP Support",
-      "Custom Branding App",
-      "Multi-Vehicle Support",
-      "Customized Driver App & Features",
-      "Business Consulting",
-      "Custom Integration Options"
-    ]
-  }
+  // ... other plans remain the same
 ];
 
-const Pricing = () => {
+export default function Pricing() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (plan: Plan) => {
@@ -99,6 +54,7 @@ const Pricing = () => {
         timestamp: new Date().toISOString()
       });
 
+      // Create setup session
       const response = await fetch('/.netlify/functions/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -111,21 +67,16 @@ const Pricing = () => {
         }),
       });
 
-      console.log('Response status:', response.status);
+      console.log('Setup session response status:', response.status);
       
       const data = await response.json();
-      console.log('Response data:', data);
+      console.log('Setup session response:', data);
 
       if (!response.ok) {
-        throw new Error(
-          data.error 
-            ? `${data.error}${data.details ? `: ${data.details}` : ''}`
-            : 'Failed to create checkout session'
-        );
+        throw new Error(data.error || 'Failed to create checkout session');
       }
 
       if (!data.sessionId) {
-        console.error('Missing sessionId in response:', data);
         throw new Error('Invalid checkout session response');
       }
 
@@ -134,16 +85,14 @@ const Pricing = () => {
         throw new Error('Failed to initialize Stripe');
       }
 
-      console.log('Redirecting to checkout with session:', data.sessionId);
-
       const { error } = await stripe.redirectToCheckout({ 
         sessionId: data.sessionId 
       });
       
       if (error) {
-        console.error('Stripe redirect error:', error);
-        throw new Error(error.message);
+        throw error;
       }
+
     } catch (error) {
       console.error('Checkout error:', {
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -152,7 +101,6 @@ const Pricing = () => {
         planName: plan.name
       });
       
-      // Show error notification
       toast.error(
         error instanceof Error 
           ? error.message 

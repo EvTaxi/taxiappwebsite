@@ -21,6 +21,11 @@ export const handler: Handler = async (event: HandlerEvent) => {
   };
 
   try {
+    console.log('Received request:', {
+      method: event.httpMethod,
+      body: event.body
+    });
+
     if (event.httpMethod === 'OPTIONS') {
       return {
         statusCode: 200,
@@ -29,92 +34,74 @@ export const handler: Handler = async (event: HandlerEvent) => {
       };
     }
 
+    if (event.httpMethod !== 'POST') {
+      throw new Error(`Invalid method: ${event.httpMethod}`);
+    }
+
     if (!event.body) {
       throw new Error('Request body is missing');
     }
 
     const { subscriptionPriceId, setupPriceId, planName } = JSON.parse(event.body);
-    
-    console.log('Creating checkout session for:', {
-      planName,
-      subscriptionPriceId,
-      setupPriceId
-    });
+    console.log('Processing checkout for:', { subscriptionPriceId, setupPriceId, planName });
 
     if (!subscriptionPriceId || !setupPriceId || !planName) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: 'Missing required fields',
-          details: { subscriptionPriceId, setupPriceId, planName }
-        })
-      };
+      throw new Error('Missing required fields');
     }
 
-    // Create the setup session
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
+    // Verify price IDs
+    try {
+      await Promise.all([
+        stripe.prices.retrieve(setupPriceId),
+        stripe.prices.retrieve(subscriptionPriceId)
+      ]);
+    } catch (error) {
+      console.error('Price verification failed:', error);
+      throw new Error('Invalid price IDs');
+    }
+
+    // Create setup session for one-time payment
+    const setupSession = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
+      mode: 'payment',
       billing_address_collection: 'required',
+      customer_creation: 'always',
       line_items: [
         {
           price: setupPriceId,
           quantity: 1,
         }
       ],
-      after_completion: {
-        type: 'redirect',
-        redirect: {
-          url: `${process.env.NEXT_PUBLIC_SITE_URL}/subscribe?setup_complete=true&subscription_price=${subscriptionPriceId}`
-        }
-      },
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/subscribe?setup_complete=true&subscription_price=${subscriptionPriceId}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
       metadata: {
         planName,
         setupPriceId,
         subscriptionPriceId,
-        type: 'setup_payment',
-        source: 'website_checkout'
-      }
+        type: 'setup',
+        timestamp: new Date().toISOString()
+      },
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/subscribe?setup_session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
     });
 
-    console.log('Created setup session:', session.id);
+    console.log('Created setup session:', setupSession.id);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        sessionId: session.id,
-        url: session.url
+        sessionId: setupSession.id,
+        url: setupSession.url
       })
     };
 
   } catch (error) {
-    console.error('Function error:', {
-      name: error instanceof Error ? error.name : 'Unknown',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    });
-
-    if (error instanceof Stripe.errors.StripeError) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: 'Stripe API Error',
-          details: error.message,
-          type: error.type
-        })
-      };
-    }
-
+    console.error('Function error:', error);
+    
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({
-        error: 'Internal server error',
+      body: JSON.stringify({ 
+        error: 'Failed to create checkout session',
         details: error instanceof Error ? error.message : 'Unknown error'
       })
     };
