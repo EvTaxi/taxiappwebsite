@@ -9,26 +9,18 @@ import { toast } from 'sonner';
 interface Plan {
   id: string;
   name: string;
-  setupFee: number;
   monthlyFee: number;
   popular?: boolean;
   features: string[];
-  priceIds: {
-    subscription: string;
-    setup: string;
-  };
+  priceId: string;
 }
 
 const plans: Plan[] = [
   {
     id: 'starter',
     name: "Starter",
-    setupFee: 199,
     monthlyFee: 29.99,
-    priceIds: {
-      subscription: 'price_1QJLwbA3rr6byWPzDLMZV8pr',
-      setup: 'price_1QJLx0A3rr6byWPznRs97N0W'
-    },
+    priceId: 'price_1QJLwbA3rr6byWPzDLMZV8pr',
     features: [
       "EV Taxi Branded Booking App",
       "2 Vinyl QR Code Signs",
@@ -41,13 +33,9 @@ const plans: Plan[] = [
   {
     id: 'professional',
     name: "Professional",
-    setupFee: 499.99,
     monthlyFee: 49.99,
     popular: true,
-    priceIds: {
-      subscription: 'price_1QJLxrA3rr6byWPzSvL4fgbU',
-      setup: 'price_1QJLxrA3rr6byWPztwjDNq3I'
-    },
+    priceId: 'price_1QJLxrA3rr6byWPzSvL4fgbU',
     features: [
       "Everything in Starter, plus:",
       "2 Magnetic QR Code Signs",
@@ -64,12 +52,8 @@ const plans: Plan[] = [
   {
     id: 'custom',
     name: "Custom App",
-    setupFee: 999.99,
     monthlyFee: 74.99,
-    priceIds: {
-      subscription: 'price_1QJLyJA3rr6byWPzNMUfhxcI',
-      setup: 'price_1QJLy2A3rr6byWPztHZoOcBt'
-    },
+    priceId: 'price_1QJLyJA3rr6byWPzNMUfhxcI',
     features: [
       "Make it truly yours. We will make a customized app just for your Business:",
       "Your Own Custom Web URL",
@@ -95,7 +79,7 @@ export default function Pricing() {
       
       console.log('Starting checkout for plan:', {
         name: plan.name,
-        priceIds: plan.priceIds,
+        priceId: plan.priceId,
       });
 
       const response = await fetch('/.netlify/functions/create-checkout-session', {
@@ -104,8 +88,7 @@ export default function Pricing() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          subscriptionPriceId: plan.priceIds.subscription,
-          setupPriceId: plan.priceIds.setup,
+          priceId: plan.priceId,
           planName: plan.name,
         }),
       });
@@ -203,9 +186,6 @@ export default function Pricing() {
                       ${plan.monthlyFee}
                     </span>
                     <span className="text-gray-600">/month</span>
-                  </div>
-                  <div className="text-gray-600 mt-1">
-                    +${plan.setupFee} one-time setup
                   </div>
                 </div>
 

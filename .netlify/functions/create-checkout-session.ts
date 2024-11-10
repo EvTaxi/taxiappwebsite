@@ -45,76 +45,61 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const { subscriptionPriceId, setupPriceId, planName } = JSON.parse(event.body);
+    const { priceId, planName } = JSON.parse(event.body);
 
     console.log('Processing request:', {
-      subscriptionPriceId,
-      setupPriceId,
+      priceId,
       planName
     });
 
-    if (!subscriptionPriceId || !setupPriceId || !planName) {
+    if (!priceId || !planName) {
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ 
           error: 'Missing required fields',
-          details: { subscriptionPriceId, setupPriceId, planName }
+          details: { priceId, planName }
         })
       };
     }
 
     try {
-      const [setupPrice, subscriptionPrice] = await Promise.all([
-        stripe.prices.retrieve(setupPriceId),
-        stripe.prices.retrieve(subscriptionPriceId)
-      ]);
-
-      console.log('Verified prices:', {
-        setup: setupPrice.id,
-        subscription: subscriptionPrice.id
-      });
-
+      await stripe.prices.retrieve(priceId);
+      console.log('Verified price:', priceId);
     } catch (priceError) {
       console.error('Price verification failed:', priceError);
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ 
-          error: 'Invalid price IDs',
+          error: 'Invalid price ID',
           details: priceError instanceof Error ? priceError.message : 'Unknown error'
         })
       };
     }
 
-    // Create the session for setup fee only
     const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
+      mode: 'subscription',
       payment_method_types: ['card'],
       billing_address_collection: 'required',
       line_items: [
         {
-          price: setupPriceId,
+          price: priceId,
           quantity: 1,
         }
       ],
       metadata: {
         planName,
-        setupPriceId,
-        subscriptionPriceId,
-        type: 'setup'
+        type: 'subscription'
       },
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/subscribe?setup_session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
       allow_promotion_codes: true,
-      payment_intent_data: {
+      subscription_data: {
         metadata: {
           planName,
-          setupPriceId,
-          subscriptionPriceId,
-          type: 'setup'
-        },
-        setup_future_usage: 'off_session'
+          type: 'subscription'
+        }
       }
     });
 
