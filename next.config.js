@@ -3,7 +3,7 @@ const nextConfig = {
   output: 'export',
   images: {
     unoptimized: true,
-    domains: ['evtaxi.app', 'evtaxiapp.com']
+    domains: ['evtaxi.app']
   },
   trailingSlash: true,
   reactStrictMode: true,
