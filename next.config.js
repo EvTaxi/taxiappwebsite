@@ -7,11 +7,7 @@ const nextConfig = {
   },
   trailingSlash: true,
   reactStrictMode: true,
-  swcMinify: true,
-  experimental: {
-    appDir: true,
-    runtime: 'nodejs'
-  }
+  swcMinify: true
 }
 
 module.exports = nextConfig

@@ -10,9 +10,10 @@ export default function SuccessContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const sessionId = searchParams?.get('session_id');
     
     if (!sessionId) {
@@ -35,8 +36,6 @@ export default function SuccessContent() {
         if (!response.ok || !data.success) {
           throw new Error(data.error || 'Payment verification failed');
         }
-
-        setVerified(true);
       } catch (err) {
         console.error('Verification error:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
@@ -74,11 +73,6 @@ export default function SuccessContent() {
         </div>
       </div>
     );
-  }
-
-  if (!verified) {
-    router.push('/#pricing');
-    return null;
   }
 
   return (
