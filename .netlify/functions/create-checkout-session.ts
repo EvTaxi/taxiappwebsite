@@ -1,19 +1,19 @@
-import { Handler, HandlerEvent } from '@netlify/functions';
+import { Handler } from '@netlify/functions';
 import Stripe from 'stripe';
 
 if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not defined');
+  throw new Error('Missing STRIPE_SECRET_KEY');
 }
 
 if (!process.env.NEXT_PUBLIC_SITE_URL) {
-  throw new Error('NEXT_PUBLIC_SITE_URL is not defined');
+  throw new Error('Missing NEXT_PUBLIC_SITE_URL');
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-10-28.acacia'
 });
 
-export const handler: Handler = async (event: HandlerEvent) => {
+export const handler: Handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -21,11 +21,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
   };
 
   try {
-    console.log('Received request:', {
-      method: event.httpMethod,
-      body: event.body
-    });
-
+    // Handle preflight requests
     if (event.httpMethod === 'OPTIONS') {
       return {
         statusCode: 200,
@@ -34,69 +30,120 @@ export const handler: Handler = async (event: HandlerEvent) => {
       };
     }
 
+    // Ensure this is a POST request
     if (event.httpMethod !== 'POST') {
-      throw new Error(`Invalid method: ${event.httpMethod}`);
+      return {
+        statusCode: 405,
+        headers,
+        body: JSON.stringify({ error: 'Method not allowed' })
+      };
     }
 
+    // Parse and validate request body
     if (!event.body) {
-      throw new Error('Request body is missing');
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Missing request body' })
+      };
     }
 
     const { subscriptionPriceId, setupPriceId, planName } = JSON.parse(event.body);
-    console.log('Processing checkout for:', { subscriptionPriceId, setupPriceId, planName });
 
+    // Log received data
+    console.log('Received request:', {
+      subscriptionPriceId,
+      setupPriceId,
+      planName
+    });
+
+    // Validate required fields
     if (!subscriptionPriceId || !setupPriceId || !planName) {
-      throw new Error('Missing required fields');
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Missing required fields',
+          details: { subscriptionPriceId, setupPriceId, planName }
+        })
+      };
     }
 
-    // Verify price IDs
+    // Verify price IDs exist
     try {
       await Promise.all([
         stripe.prices.retrieve(setupPriceId),
         stripe.prices.retrieve(subscriptionPriceId)
       ]);
-    } catch (error) {
-      console.error('Price verification failed:', error);
-      throw new Error('Invalid price IDs');
+    } catch (priceError) {
+      console.error('Price verification error:', priceError);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Invalid price IDs',
+          details: priceError instanceof Error ? priceError.message : 'Unknown error'
+        })
+      };
     }
 
-    // Create setup session for one-time payment
-    const setupSession = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+    // Create metadata
+    const metadata = {
+      planName,
+      setupPriceId,
+      subscriptionPriceId,
+      timestamp: new Date().toISOString(),
+      source: 'website_checkout'
+    };
+
+    console.log('Creating checkout session with metadata:', metadata);
+
+    // Create setup session
+    const session = await stripe.checkout.sessions.create({
       mode: 'payment',
+      payment_method_types: ['card'],
       billing_address_collection: 'required',
       customer_creation: 'always',
       line_items: [
         {
           price: setupPriceId,
-          quantity: 1,
+          quantity: 1
         }
       ],
-      metadata: {
-        planName,
-        setupPriceId,
-        subscriptionPriceId,
-        type: 'setup',
-        timestamp: new Date().toISOString()
-      },
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/subscribe?setup_session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
+      metadata,
+      allow_promotion_codes: true,
+      expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // 30 minutes from now
     });
 
-    console.log('Created setup session:', setupSession.id);
+    console.log('Created checkout session:', session.id);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        sessionId: setupSession.id,
-        url: setupSession.url
+        sessionId: session.id,
+        url: session.url
       })
     };
 
   } catch (error) {
     console.error('Function error:', error);
     
+    // Handle Stripe errors specifically
+    if (error instanceof Stripe.errors.StripeError) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: error.message,
+          type: error.type 
+        })
+      };
+    }
+
+    // Handle other errors
     return {
       statusCode: 500,
       headers,

@@ -86,13 +86,18 @@ const plans: Plan[] = [
   }
 ];
 
-function Pricing() {
+export default function Pricing() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (plan: Plan) => {
     try {
       setLoading(plan.id);
       
+      console.log('Starting checkout for plan:', {
+        name: plan.name,
+        priceIds: plan.priceIds,
+      });
+
       const response = await fetch('/.netlify/functions/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -104,8 +109,9 @@ function Pricing() {
           planName: plan.name,
         }),
       });
-      
+
       const data = await response.json();
+      console.log('Checkout session response:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create checkout session');
@@ -117,14 +123,16 @@ function Pricing() {
 
       const stripe = await getStripe();
       if (!stripe) {
-        throw new Error('Failed to initialize Stripe');
+        throw new Error('Failed to load Stripe');
       }
 
+      console.log('Redirecting to Stripe checkout...');
       const { error } = await stripe.redirectToCheckout({ 
         sessionId: data.sessionId 
       });
       
       if (error) {
+        console.error('Stripe redirect error:', error);
         throw error;
       }
 
@@ -235,5 +243,3 @@ function Pricing() {
     </section>
   );
 }
-
-export default Pricing;
