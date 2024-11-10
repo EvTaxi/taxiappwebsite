@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
+// Check for required environment variables
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not defined');
 }
@@ -14,14 +15,17 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   typescript: true,
 });
 
+// Define the structure of the request body
 interface RequestBody {
   subscriptionPriceId: string;
   setupPriceId: string;
   planName: string;
 }
 
+// Stripe checkout session handler
 export async function POST(request: Request) {
   try {
+    // Validate the request body
     if (!request.body) {
       return NextResponse.json(
         { error: 'Request body is required' },
@@ -32,21 +36,16 @@ export async function POST(request: Request) {
     const body: RequestBody = await request.json();
     const { subscriptionPriceId, setupPriceId, planName } = body;
 
+    // Validate required fields
     if (!subscriptionPriceId || !setupPriceId || !planName) {
+      console.error('Missing fields:', { subscriptionPriceId, setupPriceId, planName });
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields', details: { subscriptionPriceId, setupPriceId, planName } },
         { status: 400 }
       );
     }
 
-    const metadata = {
-      planName,
-      subscriptionPriceId,
-      setupPriceId,
-      timestamp: new Date().toISOString(),
-      source: 'website_checkout',
-    };
-
+    // Validate the provided Stripe price IDs
     try {
       await Promise.all([
         stripe.prices.retrieve(subscriptionPriceId),
@@ -55,29 +54,32 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error('Invalid price ID:', error);
       return NextResponse.json(
-        { error: 'Invalid price ID provided' },
+        { error: 'Invalid price ID provided', details: error.message },
         { status: 400 }
       );
     }
 
+    // Metadata to be attached to the session
+    const metadata = {
+      planName,
+      subscriptionPriceId,
+      setupPriceId,
+      timestamp: new Date().toISOString(),
+      source: 'website_checkout',
+    };
+
+    // Create the checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       billing_address_collection: 'required',
-      customer_creation: 'always',
       line_items: [
         {
           price: subscriptionPriceId,
           quantity: 1,
-          adjustable_quantity: {
-            enabled: false,
-          },
         },
         {
           price: setupPriceId,
           quantity: 1,
-          adjustable_quantity: {
-            enabled: false,
-          },
         },
       ],
       mode: 'subscription',
@@ -101,39 +103,19 @@ export async function POST(request: Request) {
         submit: {
           message: 'We will process your subscription and setup immediately after payment.',
         },
-        shipping_address: {
-          message: 'Please provide your billing address for tax purposes.',
-        },
       },
       locale: 'auto',
-      expires_at: Math.floor(Date.now() / 1000) + (30 * 60),
+      expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // Session expires in 30 minutes
     });
 
-    return NextResponse.json({ 
-      sessionId: session.id,
-      success: true,
-      url: session.url
-    });
+    console.log('Checkout session created:', session.id);
+
+    return NextResponse.json({ sessionId: session.id, url: session.url });
 
   } catch (error) {
     console.error('Stripe API Error:', error);
-
-    if (error instanceof Stripe.errors.StripeError) {
-      return NextResponse.json(
-        { 
-          error: error.message,
-          type: error.type,
-          success: false 
-        },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
-      { 
-        error: 'An unexpected error occurred',
-        success: false 
-      },
+      { error: error instanceof Error ? error.message : 'An unexpected error occurred' },
       { status: 500 }
     );
   }
