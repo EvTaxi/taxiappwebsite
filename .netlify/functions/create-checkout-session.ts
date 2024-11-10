@@ -98,12 +98,20 @@ export const handler: Handler = async (event) => {
 
     console.log('Creating checkout session with metadata:', metadata);
 
+    // First create a customer
+    const customer = await stripe.customers.create({
+      metadata: {
+        planName,
+        source: 'website_checkout'
+      }
+    });
+
     // Create setup session
     const session = await stripe.checkout.sessions.create({
+      customer: customer.id,
       mode: 'payment',
       payment_method_types: ['card'],
       billing_address_collection: 'required',
-      customer_creation: 'always',
       line_items: [
         {
           price: setupPriceId,
@@ -115,6 +123,10 @@ export const handler: Handler = async (event) => {
       metadata,
       allow_promotion_codes: true,
       expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // 30 minutes from now
+      payment_intent_data: {
+        metadata,
+        setup_future_usage: 'off_session'
+      }
     });
 
     console.log('Created checkout session:', session.id);
