@@ -86,19 +86,13 @@ const plans: Plan[] = [
   }
 ];
 
-export default function Pricing() {
+function Pricing() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (plan: Plan) => {
     try {
       setLoading(plan.id);
       
-      console.log('Starting checkout for plan:', {
-        name: plan.name,
-        priceIds: plan.priceIds,
-        timestamp: new Date().toISOString()
-      });
-
       const response = await fetch('/.netlify/functions/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -110,11 +104,8 @@ export default function Pricing() {
           planName: plan.name,
         }),
       });
-
-      console.log('Setup session response status:', response.status);
       
       const data = await response.json();
-      console.log('Setup session response:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create checkout session');
@@ -244,3 +235,5 @@ export default function Pricing() {
     </section>
   );
 }
+
+export default Pricing;
