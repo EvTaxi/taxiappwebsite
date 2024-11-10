@@ -1,38 +1,31 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
-import { Toaster } from 'sonner';
-import "./globals.css";
+'use client';
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
+import { Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+const SuccessContent = dynamic(
+  () => import('./SuccessContent'),
+  { ssr: false }
+);
 
-export const metadata: Metadata = {
-  title: "EV_TAXI",
-  description: "EV_TAXI - Your Personal Taxi Platform",
-};
+const LoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="text-center">
+      <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+      <p className="text-gray-600">Loading payment verification...</p>
+    </div>
+  </div>
+);
 
-export default function RootLayout({
+export default function SuccessLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-        <Toaster richColors position="top-right" />
-      </body>
-    </html>
+    <Suspense fallback={<LoadingFallback />}>
+      <SuccessContent />
+    </Suspense>
   );
 }
