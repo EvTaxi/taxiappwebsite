@@ -13,97 +13,89 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-10-28.acacia'
 });
 
+interface RequestBody {
+  priceId: string;
+  planName: string;
+}
+
 export const handler: Handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Content-Type': 'application/json'
   };
 
+  // Handle preflight requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: ''
+    };
+  }
+
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
   try {
-    if (event.httpMethod === 'OPTIONS') {
-      return {
-        statusCode: 200,
-        headers,
-        body: ''
-      };
-    }
-
-    if (event.httpMethod !== 'POST') {
-      return {
-        statusCode: 405,
-        headers,
-        body: JSON.stringify({ error: 'Method not allowed' })
-      };
-    }
-
     if (!event.body) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Missing request body' })
-      };
+      throw new Error('Missing request body');
     }
 
-    const { priceId, planName } = JSON.parse(event.body);
+    // Parse and validate request body
+    const body: RequestBody = JSON.parse(event.body);
+    console.log('Received request body:', body);
 
-    console.log('Processing request:', {
+    const { priceId, planName } = body;
+
+    if (!priceId) {
+      throw new Error('Missing priceId');
+    }
+
+    if (!planName) {
+      throw new Error('Missing planName');
+    }
+
+    // Verify the price exists in Stripe
+    console.log('Verifying price:', priceId);
+    const price = await stripe.prices.retrieve(priceId);
+    console.log('Price verified:', price.id);
+
+    const metadata = {
+      planName,
       priceId,
-      planName
-    });
+      source: 'website_checkout',
+      timestamp: new Date().toISOString()
+    };
 
-    if (!priceId || !planName) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ 
-          error: 'Missing required fields',
-          details: { priceId, planName }
-        })
-      };
-    }
-
-    try {
-      await stripe.prices.retrieve(priceId);
-      console.log('Verified price:', priceId);
-    } catch (priceError) {
-      console.error('Price verification failed:', priceError);
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ 
-          error: 'Invalid price ID',
-          details: priceError instanceof Error ? priceError.message : 'Unknown error'
-        })
-      };
-    }
-
+    // Create checkout session
+    console.log('Creating checkout session...');
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
       billing_address_collection: 'required',
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        }
-      ],
-      metadata: {
-        planName,
-        type: 'subscription'
-      },
+      line_items: [{
+        price: priceId,
+        quantity: 1,
+      }],
+      metadata,
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
       allow_promotion_codes: true,
       subscription_data: {
-        metadata: {
-          planName,
-          type: 'subscription'
-        }
-      }
+        metadata
+      },
+      customer_email: undefined, // Let Stripe collect this
+      client_reference_id: undefined, // Optional: Add if you want to track orders
     });
 
-    console.log('Created checkout session:', session.id);
+    console.log('Checkout session created:', session.id);
 
     return {
       statusCode: 200,
@@ -115,25 +107,39 @@ export const handler: Handler = async (event) => {
     };
 
   } catch (error) {
-    console.error('Function error:', error);
-    
+    console.error('Error processing request:', error);
+
+    // Handle specific error types
     if (error instanceof Stripe.errors.StripeError) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           error: error.message,
-          type: error.type 
+          type: error.type
         })
       };
     }
 
+    // Handle validation errors
+    if (error instanceof Error) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: error.message,
+          type: 'validation_error'
+        })
+      };
+    }
+
+    // Handle unknown errors
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ 
-        error: 'Failed to create checkout session',
-        details: error instanceof Error ? error.message : 'Unknown error'
+      body: JSON.stringify({
+        error: 'An unexpected error occurred',
+        type: 'server_error'
       })
     };
   }

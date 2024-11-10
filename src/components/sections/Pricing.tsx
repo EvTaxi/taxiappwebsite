@@ -74,72 +74,67 @@ export default function Pricing() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (plan: Plan) => {
-    try {
-      setLoading(plan.id);
-      
-      console.log('Starting checkout for plan:', {
-        name: plan.name,
+  try {
+    setLoading(plan.id);
+    
+    console.log('Starting checkout for plan:', {
+      name: plan.name,
+      priceId: plan.priceId,
+    });
+
+    const response = await fetch('/.netlify/functions/create-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         priceId: plan.priceId,
-      });
+        planName: plan.name,
+      }),
+    });
 
-      const response = await fetch('/.netlify/functions/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          priceId: plan.priceId,
-          planName: plan.name,
-        }),
-      });
+    const data = await response.json();
+    console.log('Checkout session response:', data);
 
-      const data = await response.json();
-      console.log('Checkout session response:', data);
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session');
-      }
-
-      if (!data.sessionId) {
-        throw new Error('Invalid checkout session response');
-      }
-
-      const stripe = await getStripe();
-      if (!stripe) {
-        throw new Error('Failed to load Stripe');
-      }
-
-      console.log('Redirecting to Stripe checkout...');
-      const { error } = await stripe.redirectToCheckout({ 
-        sessionId: data.sessionId 
-      });
-      
-      if (error) {
-        console.error('Stripe redirect error:', error);
-        throw error;
-      }
-
-    } catch (error) {
-      console.error('Checkout error:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        error,
-        planId: plan.id,
-        planName: plan.name
-      });
-      
-      toast.error(
-        error instanceof Error 
-          ? error.message 
-          : 'Payment failed. Please try again or contact support.',
-        {
-          duration: 5000,
-          position: 'top-right',
-        }
-      );
-    } finally {
-      setLoading(null);
+    if (data.error) {
+      throw new Error(data.error);
     }
-  };
+
+    const stripe = await getStripe();
+    if (!stripe) {
+      throw new Error('Failed to load Stripe');
+    }
+
+    console.log('Redirecting to Stripe checkout...');
+    const { error } = await stripe.redirectToCheckout({ 
+      sessionId: data.sessionId 
+    });
+    
+    if (error) {
+      console.error('Stripe redirect error:', error);
+      throw error;
+    }
+
+  } catch (error) {
+    console.error('Checkout error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      planId: plan.id,
+      planName: plan.name
+    });
+    
+    toast.error(
+      error instanceof Error 
+        ? error.message 
+        : 'Payment failed. Please try again or contact support.',
+      {
+        duration: 5000,
+        position: 'top-right',
+      }
+    );
+  } finally {
+    setLoading(null);
+  }
+};
 
   return (
     <section className="py-20 bg-gray-50" id="pricing">
