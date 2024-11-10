@@ -122,7 +122,6 @@ export const handler: Handler = async (event) => {
       tax_id_collection: {
         enabled: true,
       },
-      billing_address_collection: 'required',
       custom_text: {
         submit: {
           message: 'We will process your subscription immediately after payment.'
