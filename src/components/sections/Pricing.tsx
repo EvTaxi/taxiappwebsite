@@ -38,7 +38,52 @@ const plans: Plan[] = [
       "Schedule & Request Now App",
     ]
   },
-  // ... other plans remain the same
+  {
+    id: 'professional',
+    name: "Professional",
+    setupFee: 499.99,
+    monthlyFee: 49.99,
+    popular: true,
+    priceIds: {
+      subscription: 'price_1QJLxrA3rr6byWPzSvL4fgbU',
+      setup: 'price_1QJLxrA3rr6byWPztwjDNq3I'
+    },
+    features: [
+      "Everything in Starter, plus:",
+      "2 Magnetic QR Code Signs",
+      "2 Magnetic EV Taxi Signs",
+      "4 NFC Cards",
+      "Priority Support",
+      "Advanced Analytics",
+      "Multi-Vehicle Support",
+      "Customer Management",
+      "In App Payment Processing",
+      "Branded Booking App",
+    ]
+  },
+  {
+    id: 'custom',
+    name: "Custom App",
+    setupFee: 999.99,
+    monthlyFee: 74.99,
+    priceIds: {
+      subscription: 'price_1QJLyJA3rr6byWPzNMUfhxcI',
+      setup: 'price_1QJLy2A3rr6byWPztHZoOcBt'
+    },
+    features: [
+      "Make it truly yours. We will make a customized app just for your Business:",
+      "Your Own Custom Web URL",
+      "2 Custom Magnetic QR Code Signs",
+      "2 Custom Logo Signs",
+      "8 Custom NFC Cards",
+      "24/7 VIP Support",
+      "Custom Branding App",
+      "Multi-Vehicle Support",
+      "Customized Driver App & Features",
+      "Business Consulting",
+      "Custom Integration Options"
+    ]
+  }
 ];
 
 export default function Pricing() {
@@ -54,7 +99,6 @@ export default function Pricing() {
         timestamp: new Date().toISOString()
       });
 
-      // Create setup session
       const response = await fetch('/.netlify/functions/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -115,7 +159,6 @@ export default function Pricing() {
     }
   };
 
-  // Rest of your component remains the same...
   return (
     <section className="py-20 bg-gray-50" id="pricing">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -200,6 +243,4 @@ export default function Pricing() {
       </div>
     </section>
   );
-};
-
-export default Pricing;
+}
