@@ -21,7 +21,6 @@ export const handler: Handler = async (event) => {
   };
 
   try {
-    // Handle preflight requests
     if (event.httpMethod === 'OPTIONS') {
       return {
         statusCode: 200,
@@ -30,7 +29,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Ensure this is a POST request
     if (event.httpMethod !== 'POST') {
       return {
         statusCode: 405,
@@ -39,7 +37,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Parse and validate request body
     if (!event.body) {
       return {
         statusCode: 400,
@@ -50,14 +47,12 @@ export const handler: Handler = async (event) => {
 
     const { subscriptionPriceId, setupPriceId, planName } = JSON.parse(event.body);
 
-    // Log received data
-    console.log('Received request:', {
+    console.log('Processing request:', {
       subscriptionPriceId,
       setupPriceId,
       planName
     });
 
-    // Validate required fields
     if (!subscriptionPriceId || !setupPriceId || !planName) {
       return {
         statusCode: 400,
@@ -69,14 +64,19 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Verify price IDs exist
     try {
-      await Promise.all([
+      const [setupPrice, subscriptionPrice] = await Promise.all([
         stripe.prices.retrieve(setupPriceId),
         stripe.prices.retrieve(subscriptionPriceId)
       ]);
+
+      console.log('Verified prices:', {
+        setup: setupPrice.id,
+        subscription: subscriptionPrice.id
+      });
+
     } catch (priceError) {
-      console.error('Price verification error:', priceError);
+      console.error('Price verification failed:', priceError);
       return {
         statusCode: 400,
         headers,
@@ -87,44 +87,33 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Create metadata
-    const metadata = {
-      planName,
-      setupPriceId,
-      subscriptionPriceId,
-      timestamp: new Date().toISOString(),
-      source: 'website_checkout'
-    };
-
-    console.log('Creating checkout session with metadata:', metadata);
-
-    // First create a customer
-    const customer = await stripe.customers.create({
-      metadata: {
-        planName,
-        source: 'website_checkout'
-      }
-    });
-
-    // Create setup session
+    // Create the session for setup fee only
     const session = await stripe.checkout.sessions.create({
-      customer: customer.id,
       mode: 'payment',
       payment_method_types: ['card'],
       billing_address_collection: 'required',
       line_items: [
         {
           price: setupPriceId,
-          quantity: 1
+          quantity: 1,
         }
       ],
+      metadata: {
+        planName,
+        setupPriceId,
+        subscriptionPriceId,
+        type: 'setup'
+      },
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/subscribe?setup_session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
-      metadata,
       allow_promotion_codes: true,
-      expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // 30 minutes from now
       payment_intent_data: {
-        metadata,
+        metadata: {
+          planName,
+          setupPriceId,
+          subscriptionPriceId,
+          type: 'setup'
+        },
         setup_future_usage: 'off_session'
       }
     });
@@ -143,7 +132,6 @@ export const handler: Handler = async (event) => {
   } catch (error) {
     console.error('Function error:', error);
     
-    // Handle Stripe errors specifically
     if (error instanceof Stripe.errors.StripeError) {
       return {
         statusCode: 400,
@@ -155,7 +143,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Handle other errors
     return {
       statusCode: 500,
       headers,
