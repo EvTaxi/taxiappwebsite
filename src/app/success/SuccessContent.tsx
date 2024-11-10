@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function SuccessContent() {
   const searchParams = useSearchParams();
@@ -12,17 +13,15 @@ export default function SuccessContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const sessionId = searchParams?.get('session_id');
-    
-    if (!sessionId) {
-      router.push('/#pricing');
-      return;
-    }
-
     const verifySession = async () => {
       try {
+        const sessionId = searchParams?.get('session_id');
+        
+        if (!sessionId) {
+          router.push('/#pricing');
+          return;
+        }
+
         const response = await fetch('/.netlify/functions/verify-session', {
           method: 'POST',
           headers: {
@@ -31,14 +30,25 @@ export default function SuccessContent() {
           body: JSON.stringify({ sessionId }),
         });
 
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Payment verification failed');
+        }
+
         const data = await response.json();
 
-        if (!response.ok || !data.success) {
-          throw new Error(data.error || 'Payment verification failed');
+        if (!data.success) {
+          throw new Error('Payment verification failed');
         }
+
+        // Optional: Show success toast
+        toast.success('Payment successful!');
+
       } catch (err) {
         console.error('Verification error:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
+        // Optional: Show error toast
+        toast.error('Failed to verify payment. Please contact support.');
       } finally {
         setLoading(false);
       }
