@@ -18,13 +18,13 @@ const Hero = () => {
           transition={{ duration: 0.5 }}
         >
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Maximize Your Ride-Share Revenue.
+            Build Your Independent Driving Empire.
             <br />
-            <span className="text-yellow-400"> Keep 100% of Your Fares!</span>
+            <span className="text-yellow-400"> No More Commission Fees. No More Split Fares.</span>
           </h1>
           
           <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
-            Stop letting ride-sharing platforms take a slice of your hard-earned money. Get your own personalized booking system with QR codes to take back control, increase your profits, and provide a seamless experience for your customers.
+            Launch your professional booking platform with our QR-powered system. Connect directly with customers, set your own rates, and grow your business on your terms.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
