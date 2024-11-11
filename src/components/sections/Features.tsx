@@ -13,12 +13,12 @@ const Features = () => {
     {
       icon: Smartphone,
       title: "NFC Tap-to-Book",
-      description: "NFC cards in your vehicle allow customers to book with a simple tap of their phone."
+      description: "NFC cards in your vehicle allow customers to book a ride with a simple tap of their phone."
     },
     {
       icon: Calendar,
-      title: "Future Bookings",
-      description: "Accept advance reservations and build a reliable schedule of regular customers."
+      title: "Schedule Rides",
+      description: "Passengers can scedule and book rides with you directly."
     },
     {
       icon: Wallet,
