@@ -32,12 +32,13 @@ const FAQ = () => {
       question: "What kind of support do you provide?",
       answer: "We provide technical support for your booking system, help issues ou may encounter, and guidance on growing your business. Higher tier plans include priority support and business consulting."
     },
-	{
-      question: "Can I still do Uber and Lyft?",
-      answer: "Keep Your Current Platforms – Add More Earnings
-               Perfect for active Uber & Lyft drivers! Use your existing rides to build something bigger. Deliver great service, share your personal booking link, and turn happy passengers into direct clients. It's that simple"
-    }
-  ];
+  {
+    question: "Can I still do Uber and Lyft?",
+    answer: `Keep Your Current Platforms – Add More Earnings
+
+Perfect for active Uber & Lyft drivers! Use your existing rides to build something bigger. Deliver great service, share your personal booking link, and turn happy passengers into direct clients. It's that simple.`
+  }
+];
 
   return (
     <section className="py-20 bg-white" id="faq">
