@@ -20,7 +20,7 @@ const Hero = () => {
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
             Build Your Independent Driving Empire.
             <br />
-            <span className="text-yellow-400"> No More Commission Fees. No More Split Fares.</span>
+            <span className="text-yellow-400"> No Commission Fees. No Split Fares.</span>
           </h1>
           
           <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
