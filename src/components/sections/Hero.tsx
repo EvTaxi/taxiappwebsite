@@ -24,7 +24,7 @@ const Hero = () => {
           </h1>
           
           <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
-            Launch your professional booking platform with our QR-powered system. Connect directly with customers, set your own rates, and grow your business on your terms.
+            Connect with customers through QR codes, custom web links, NFC cards, or professional business cards. Our all-in-one booking platform gives you the tools to run your independent ride service exactly how you want it.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
