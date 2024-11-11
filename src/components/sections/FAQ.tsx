@@ -34,14 +34,11 @@ const FAQ = () => {
     },
 	{
       question: "Can I still do Uber and Lyft?",
-      answer: "Absolutely – 
-      Turn one-time rides into loyal, direct-booking clients. The EV Taxi platform works alongside your existing services, helping you:
-
+      answer: "Absolutely. Turn one-time rides into loyal, direct-booking clients. The EV Taxi platform works alongside your existing services, helping you:
       Convert satisfied passengers into regular customers
       Build your own client base gradually
       Earn full fares from repeat bookings
       Create independence on your own schedule
-
       Think of Uber and Lyft as your marketing channel. Provide great service, share your personal booking options, and watch your direct business grow."
     }
   ];
