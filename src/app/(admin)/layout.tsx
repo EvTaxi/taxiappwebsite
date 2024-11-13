@@ -37,13 +37,13 @@ export default function AdminLayout({
   }, [user, router]);
 
   const navigation = [
-    { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-    { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-    { name: 'Shipments', href: '/admin/shipments', icon: Package },
-    { name: 'Inventory', href: '/admin/inventory', icon: Box },
-    { name: 'Customers', href: '/admin/customers', icon: Users },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
-  ];
+  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+  { name: 'Shipments', href: '/admin/shipments', icon: Package },
+  { name: 'Inventory', href: '/admin/inventory', icon: Box },
+  { name: 'Customers', href: '/admin/customers', icon: Users },
+  { name: 'Settings', href: '/admin/settings', icon: Settings },
+];
 
   return (
     <div className="min-h-screen bg-gray-100">
