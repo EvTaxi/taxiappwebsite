@@ -1,5 +1,5 @@
 [build]
-  command = "next build"
+  command = "npm run build"
   publish = ".next"
 
 [[plugins]]
@@ -19,19 +19,11 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
-  force = true
-
-# Next.js-specific redirects
-[[redirects]]
-  from = "/_next/static/*"
-  to = "/static/:splat"
-  status = 200
 
 [[redirects]]
   from = "/*"
-  to = "/.netlify/functions/next_handler"
+  to = "/.netlify/functions/nextjs-server"
   status = 200
-  force = true
 
 [[headers]]
   for = "/*"
@@ -40,19 +32,6 @@
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval' https://*.stripe.com https://*.supabase.co; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https://*.stripe.com https://*.supabase.co;"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version"
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
-
-[[headers]]
-  for = "/_next/static/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/static/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
