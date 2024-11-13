@@ -1,10 +1,16 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
-import localFont from "next/font/local";
-import { Toaster } from 'sonner';
-import { AuthProvider } from '@/contexts/AuthContext';
+import localFont from "next/font/local";  // Add this import
+import { LayoutProvider } from './LayoutProvider';
 import "./globals.css";
 
+// Metadata must be in a Server Component
+export const metadata: Metadata = {
+  title: "EV_TAXI",
+  description: "EV_TAXI - Your Personal Taxi Platform",
+};
+
+// Fonts should be defined in the Server Component
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -17,11 +23,6 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-export const metadata: Metadata = {
-  title: "EV_TAXI",
-  description: "EV_TAXI - Your Personal Taxi Platform",
-};
-
 export default function RootLayout({
   children,
 }: {
@@ -29,13 +30,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <AuthProvider>
-          {children}
-          <Toaster richColors position="top-right" />
-        </AuthProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <LayoutProvider>{children}</LayoutProvider>
       </body>
     </html>
   );
