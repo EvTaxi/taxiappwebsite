@@ -1,16 +1,13 @@
-// src/components/ui/card.tsx
 import { forwardRef } from 'react';
 
-const Card = forwardRef<
+export const Card = forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+>(({ className = '', ...props }, ref) => (
   <div
     ref={ref}
-    className="rounded-lg border bg-white shadow-sm"
+    className={`rounded-lg border bg-white shadow-sm ${className}`}
     {...props}
   />
 ));
 Card.displayName = "Card";
-
-export { Card };

@@ -5,7 +5,6 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
 
-// Define types for our Profile and Context
 interface Profile {
   id: string;
   email: string;
@@ -16,6 +15,12 @@ interface Profile {
   car_model: string | null;
   car_year: string | null;
   profile_image_url: string | null;
+  address_1: string | null;
+  address_2: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
+  country: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,23 +29,20 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
+  updateProfile: (updates: Partial<Profile>) => Promise<{ error: Error | null }>;
 }
 
-// Create the context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Create the provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -48,7 +50,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -81,12 +82,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error };
+    return { error: error as Error | null };
   };
 
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({ email, password });
-    return { error };
+    return { error: error as Error | null };
   };
 
   const signOut = async () => {
@@ -107,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(prev => prev ? { ...prev, ...updates } : null);
     }
 
-    return { error };
+    return { error: error as Error | null };
   };
 
   if (loading) {
@@ -133,7 +134,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Create the hook for using the context
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
