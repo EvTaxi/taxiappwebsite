@@ -1,8 +1,6 @@
-// src/app/(dashboard)/orders/[id]/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
@@ -10,9 +8,10 @@ import {
   Loader2, 
   Package, 
   Truck, 
-  MapPin, 
+  MapPin,
   Calendar,
-  ArrowLeft
+  ArrowLeft,
+  Check
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -213,7 +212,7 @@ export default function OrderDetailsPage() {
                   className="flex items-center justify-between py-2 border-b last:border-0"
                 >
                   <div className="flex items-center">
-                     <Package className="w-5 h-5 text-gray-400 mr-3" />
+                    <Package className="w-5 h-5 text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         {item.item_name}
@@ -256,7 +255,6 @@ export default function OrderDetailsPage() {
                     </div>
                   </div>
                 </li>
-                {/* Add more timeline items based on order status */}
               </ul>
             </div>
           </div>
