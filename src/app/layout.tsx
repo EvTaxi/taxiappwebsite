@@ -1,3 +1,4 @@
+// src/app/layout.tsx
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Toaster } from 'sonner';
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
 }) {
   return (
@@ -38,4 +39,4 @@ export default function RootLayout({
       </body>
     </html>
   );
-}</document_content>
+}
