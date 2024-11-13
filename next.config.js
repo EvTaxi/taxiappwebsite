@@ -4,8 +4,17 @@ const nextConfig = {
   swcMinify: true,
   images: {
     unoptimized: true,
-    domains: ['evtaxi.app']
-  }
+    domains: ['evtaxi.app'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'evtaxi.app',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
+  output: 'standalone',
 }
 
 module.exports = nextConfig
